@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style type="text/css">
+body {
+ display: grid;
+ margin: 0px;
+ background-color:white;
+ place-items: center;
+/* background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(9,9,121,1) 36%, rgba(0,212,255,1) 100%);
+ animation: grad 1s linear infinite;*/
+ transition: background-color 0.1s;
+ gap: 20px;
+}
+button {
+ position: relative;
+ height: 50px;
+ width: 100px;
+}
+div {
+ background-color: none;
+ color:black;
+}
+</style>
+<script src="build/pdf.js"></script>
+<head>
+<title>Javascript Projects</title>
+</head>
+<body>
+<div class="Color">
+<h2>Background Color :<span id="colour"> #000000 </span></h2>
+<center>
+<button onclick="change()">Waku waku</button>
+</center>
+</div>
+<div>
+<h2>Counters For Noobies</h2>
+<center>
+<h3 id="num"></h3><button>Change Display</button>
+</center>
+
+<table>
+<tr>
+<td><button onclick="opt(1)">Decrease</button></td>
+<td><button onclick="opt(2)">Reset</button></td>
+<td><button onclick="opt(3)">Increase</button></td>
+</tr>
+</table>
+</div>
+<div>
+<input type="text" id="screen" value=""></h2>
+<table>
+<tr><td><button class="btn">1</button></td><td><button class="btn">2</button></td><td><button class="btn">3</button></td><td><button class="btn">+</button></td></tr>
+<tr><td><button class="btn">4</button></td><td><button class="btn">5</button></td><td><button class="btn">6</button></td><td><button class="btn">-</button></td></tr>
+<tr><td><button class="btn">7</button></td><td><button class="btn">8</button></td><td><button class="btn">9</button></td><td><button class="btn">*</button></td></tr>
+<tr><td><button onclick="clearscreen()">X</button></td><td><button class="btn">0</button></td><td><button onclick="calculate()">=</button></td><td><button class="btn">/</button></td></tr>
+</table>
+</div>
+<div style="display: grid;">
+<input type="file" id="imageInput">
+<button id="convertButton">Convert to Base64</button>
+<textarea id="base64Output" rows="10" cols="50"></textarea>
+</div>
+<div>
+<!--<canvas id="pdfCanvas"></canvas>-->
+<input type="file" id="pdfFile" accept=".pdf">
+<button onclick="extractImages()">Extract Images</button>
+<div id="imageContainer"></div>
+</div>
+<script>
+const spectrum = ["#F5F5F5","#ADD8E6","#90EE90","#FFFFE0","#FFB6C1","#E6E6FA","#F5DEB3","#FFE4B5","#98FB98","#F08080"];
+const usedSpec = [];
+function change() {
+	const nani = Math.floor(Math.random() * spectrum.length);
+	document.body.style.backgroundColor = spectrum[nani];
+	document.getElementById("colour").textContent = spectrum[nani];
+}
+let buttons = document.querySelectorAll(".btn");
+for(let puppy of buttons) {
+  puppy.onclick = function() {
+  document.getElementById("screen").value += this.innerText;
+ };
+}
+var numb = 0;
+function update() {
+	document.getElementById("num").textContent = numb;
+}
+update();
+function calculate() {
+var expression = document.getElementById("screen").value;
+var result = eval(expression);
+document.getElementById("screen").value = result;
+}
+function clearscreen() {
+document.getElementById("screen").value = "";
+}
+function opt(x) {
+	if (x === 1) {
+		numb--;
+	}
+	else if (x === 2) {
+		numb = 0;
+	}
+	else {
+		numb++;
+	}
+	update();
+}
+document.getElementById('convertButton').addEventListener('click', function () {
+    const inputElement = document.getElementById('imageInput');
+    const file = inputElement.files[0];
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const base64String = e.target.result.split(',')[1];
+            const base64Output = document.getElementById('base64Output');
+            base64Output.value = "data:image/jpeg;base64," + base64String;
+            base64Output.select();
+            document.execCommand('copy');
+            alert('Base64 string copied to clipboard!');
+        };
+        reader.readAsDataURL(file);
+    }
+});
+function extractImages() {
+    const pdfFileInput = document.getElementById('pdfFile');
+    const imageContainer = document.getElementById('imageContainer');
+    const file = pdfFileInput.files[0];
+    const fileReader = new FileReader();
+    fileReader.onload = function(event) {
+        const pdfData = new Uint8Array(event.target.result);
+        pdfjsLib.getDocument(pdfData).promise.then(function(pdf) {
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                pdf.getPage(pageNum).then(function(page) {
+                    page.getOperatorList().then(function(operatorList) {
+                        var imageData = [];
+                        for (var i = 0; i < operatorList.fnArray.length; i++) {
+                            var fn = operatorList.fnArray[i];
+                            if (fn === pdfjsLib.OPS.paintImageXObject) {
+                                var image = operatorList.argsArray[i][0];
+                                imageData.push(image);
+                            }
+                        }
+                        for (var j = 0; j < imageData.length; j++) {
+                            var image = imageData[j];
+                            var imgData = image.data;
+                            var imgInfo = image.dict;
+                            var dataUrl = 'data:image/jpeg;base64,' + arrayBufferToBase64(imgData);
+                            var imgElement = document.createElement('img');
+                            imgElement.src = dataUrl;
+                            imageContainer.appendChild(imgElement);
+                        }
+                    });
+                });
+            }
+        });
+    };
+    
+    function arrayBufferToBase64(arrayBuffer) {
+        var binary = '';
+        var bytes = new Uint8Array(arrayBuffer);
+        var len = bytes.byteLength;
+        for (var i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return window.btoa(binary);
+    }
+}
+
+</script>
+</body>
+</html>
